@@ -52,7 +52,7 @@ const Summary = ({cart, onReset,onOpen}:SumProps) => {
                     <button aria-label="เคลียร์สินค้า" title="เคลียร์สินค้า" draggable={false} className="h-20 w-30 rounded-l-lg bg-[#FF4D4D] p-3 mt-15 mb-5 drop-shadow-xl/20 hover:drop-shadow-xl/30 duration-300 cursor-pointer active:translate-y-1" onClick={onReset}>
                         <img draggable={false} src="./img/clear.svg" alt="" className="h-full w-full"/>
                     </button>
-                    <button onClick={onClickHandler} aria-label="ชำระสินค้า" draggable={false} className="h-20 w-30 rounded-l-lg bg-[#00C853] p-3 drop-shadow-xl/20 hover:drop-shadow-xl/30 duration-300 cursor-pointer active:translate-y-1" >
+                    <button disabled={cart.length === 0} onClick={onClickHandler} aria-label="ชำระสินค้า" draggable={false} className="h-20 w-30 rounded-l-lg bg-[#00C853] p-3 drop-shadow-xl/20 hover:drop-shadow-xl/30 duration-300 cursor-pointer active:translate-y-1" >
                         <img draggable={false} src="./img/submit.svg" alt="" className="h-full w-full"/>
                     </button>
                     
