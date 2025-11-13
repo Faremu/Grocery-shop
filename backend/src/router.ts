@@ -14,6 +14,10 @@ interface InventoryRow extends RowDataPacket {
   price: number;
   cost: number;
 }
+interface TransactionQuery {
+  startdate?: string;
+  enddate?: string;
+}
 interface Merchandise {
   code: string;
   name: string;
@@ -101,14 +105,33 @@ router.get('/merlist', async(req,res)=>{
 
     }
 });
-router.get('/transaction', async(req,res)=>{
+router.get('/transaction', async(req: Request<{}, {}, {}, TransactionQuery>,res: Response)=>{
   try {
-    const [row] = await db.query("SELECT * FROM transaction;");
-    res.json(row)
+    const { startdate, enddate } = req.query;
+    if (!startdate || !enddate) {
+      res.status(400).json({ error: "startdate and enddate are required" });
+      return;
+    }
+
+    const start: string = startdate;
+    const end: string = enddate;
+
+    // Use DATE(timestamp) to ignore time, safe for inclusive date filter
+    const query = `
+      SELECT * 
+      FROM transaction
+      WHERE DATE(timestamp) BETWEEN ? AND ?
+      ORDER BY timestamp;
+    `;
+
+    const [rows] = await db.query(query, [start, end]);
+
+    res.json(rows);
   } catch (error) {
-    res.status(500).json({error:"Database error", details:error})
+    console.error(error);
+    res.status(500).json({ error: "Database error", details: error });
   }
-})
+});
 
 router.post('/addmer',upload.single('image'),async (req: CustomRequest, res: Response) => {
     try {

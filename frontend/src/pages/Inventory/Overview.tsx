@@ -47,7 +47,7 @@ const Overview = () => {
                         showMonthDropdown
                         />
             </div>
-            <Chart startDate={startDate} endDate={endDate}/>
+            <Chart startDate={startDate} endDate={endDate} setStartDate={setStartDate} setEndDate={setEndDate} />
             <div className='flex flex-row'>
                 <div>
                     <div className='bg-white shadow-lg w-100 h-20 my-10 mr-10 rounded-2xl p-5 flex flex-row items-center justify-between hover:ring-1 duration-700 cursor-pointer'>

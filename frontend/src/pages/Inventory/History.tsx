@@ -4,8 +4,10 @@ import DatePicker from "react-datepicker";
 import { useQuery } from "@tanstack/react-query";
 import type { TransactionData, TransactionResponse } from "../../Types";
 
-const fetchData = async (): Promise<TransactionData[]> => {
-    const res = await axios.get<TransactionResponse[]>("http://localhost:3000/transaction");
+const fetchData = async (startDate: Date, endDate: Date): Promise<TransactionData[]> => {
+    const startStr = startDate.toLocaleDateString("en-CA"); // YYYY-MM-DD
+    const endStr = endDate.toLocaleDateString("en-CA"); // YYYY-MM-DD
+    const res = await axios.get<TransactionResponse[]>(`http://localhost:3000/transaction?startdate=${startStr}&enddate=${endStr}`);
     const data = res.data.map((item):TransactionData => ({
         ...item,
         timestamp: new Date(item.timestamp)
@@ -25,8 +27,8 @@ const History = () => {
     const [startDate, setStartDate] = useState<Date | undefined>(new Date());
     const [endDate, setEndDate] = useState<Date | null>(new Date());
     const {data=[],isLoading,isError,error} = useQuery({
-        queryKey:["History"],
-        queryFn:fetchData,
+        queryKey:["History", startDate, endDate],
+        queryFn:() =>fetchData(startDate!, endDate!),
     })
     if(isLoading)return <div>Loading...</div>;
     if (isError) return <div>Error: {(error as Error).message}</div>;
@@ -39,7 +41,7 @@ const History = () => {
                 <p>ตั้งแต่</p>
                 <DatePicker
                         selected={startDate}
-                        onChange={(date) => setStartDate(date ?? undefined)}
+                        onChange={(date) => setStartDate(date ?? new Date())}
                         selectsStart
                         className="text-center border-b-2 mx-2 w-[120px]"
                         showYearDropdown
@@ -48,7 +50,7 @@ const History = () => {
                 <p>ถึง</p>
                 <DatePicker
                         selected={endDate}
-                        onChange={(date) => setEndDate(date)}
+                        onChange={(date) => setEndDate(date ?? new Date())}
                         selectsEnd
                         minDate={startDate}
                         className="text-center border-b-2 mx-2 w-[120px]"

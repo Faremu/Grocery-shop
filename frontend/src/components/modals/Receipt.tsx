@@ -4,23 +4,64 @@ import axios from "axios";
 import { useState } from "react";
 import generatePayload from "promptpay-qr";
 import { QRCodeCanvas } from "qrcode.react";
+import type { UseMutationResult } from "@tanstack/react-query";
 
 type receiptProps = {
     cart: SelectedItem[];
     onClose: ()=>void;
 }
+type SellPayload = { cart: SelectedItem[]; total: number; receive: number };
+type SellResponse = { success: boolean; message: string }; // replace with your API response type
+type CashProps = {
+  cart: SelectedItem[];
+  receive: string;
+  setReceive: (val: string) => void;
+  mutation: UseMutationResult<SellResponse, unknown, SellPayload, unknown>;
+};
 
+const Cash = ({ cart, receive, setReceive, mutation }: CashProps) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    if (/^\d*$/.test(val)) setReceive(val);
+  };
+
+  const handleConfirm = () => {
+    const numericReceive = Number(receive);
+    const total = cart.reduce((sum, item) => sum + item.price * item.amount, 0);
+    const payload = { cart, total, receive: numericReceive };
+    mutation.mutate(payload);
+  };
+
+  return (
+    <div className="flex flex-col items-center">
+      <h1 className="mb-2 text-xl">รับเงินมา</h1>
+      <input
+        className="rounded-lg mb-5 border focus:outline-none text-center"
+        type="text"
+        value={receive}
+        onChange={handleChange}
+      />
+      <button
+        onClick={handleConfirm}
+        className="bg-[#00C853] py-2 w-35 rounded-full cursor-pointer"
+      >
+        <p className="text-2xl text-white font-bold">ยืนยัน</p>
+      </button>
+      <p className="text-2xl text-white font-bold">
+        {mutation.isPending ? "กำลังยืนยัน..." : "ยืนยัน"}
+      </p>
+    </div>
+  );
+};
 
 const Receipt = ({cart, onClose}:receiptProps) => {
-    const [receive, setReceive] = useState(0);
+    const [receive, setReceive] = useState<string>("");
     const [payment, setPayment] = useState("");
-    const sellMer = async(cart:SelectedItem[]) =>{
-        const total = cart.reduce((sum, item) => sum + item.price * item.amount, 0);
-        const payload = {cart,total,receive}
-        const res = await axios.post("http://localhost:3000/sell",payload);
+    const sellMer = async(payload: { cart: SelectedItem[]; total: number; receive: number }) => {
+        const res = await axios.post("http://localhost:3000/sell", payload);
         console.log(res.data);
         return res.data;
-    }
+    };
     const mutation = useMutation({
         mutationFn:sellMer,
         onSuccess: (data)=>{
@@ -60,11 +101,9 @@ const Receipt = ({cart, onClose}:receiptProps) => {
                     size={250}
                     bgColor="#ffffff"
                     fgColor="#000000"
-                    level="H" // High error correction (important when overlaying logo)
-                    includeMargin
+                    level="H"
                     />
 
-                    {/* 2️⃣ Overlay logo */}
                     <img
                     src="/img/PromptPay-Icon.png"
                     alt="PromptPay"
@@ -75,18 +114,6 @@ const Receipt = ({cart, onClose}:receiptProps) => {
                     <br />
                     จำนวนเงิน: {amount.toFixed(2)} บาท
                     </p>
-            </div>
-        )
-    }
-    const Cash = () => {
-        return (
-            <div className="flex flex-col">
-                <p className="mb-2">รับเงินมา</p>
-                <input className="rounded-lg mb-5 border focus:outline-none text-center" type="text" value={receive} onChange={e=>setReceive(Number(e.target.value))}/>
-                <button onClick={()=>mutation.mutate(cart)} className="bg-[#00C853] py-2 w-35 rounded-full cursor-pointer"><p className="text-2xl text-white font-bold">ยืนยัน</p></button>
-                <p className="text-2xl text-white font-bold">
-                    {mutation.isPending ? "กำลังยืนยัน..." : "ยืนยัน"}
-                </p>
             </div>
         )
     }
@@ -116,7 +143,7 @@ const Receipt = ({cart, onClose}:receiptProps) => {
                 <hr className="w-70 border-gray-300 mb-5" />
                 {(payment === "")&& <PaymentSec />}
                 {(payment === "Promptpay")&& <Promptpay />} 
-                {(payment === "Cash")&& <Cash />} 
+                {(payment === "Cash")&& <Cash cart={cart} receive={receive} setReceive={setReceive} mutation={mutation} />} 
                 
             </div>
         </div>

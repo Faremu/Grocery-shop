@@ -3,25 +3,46 @@ import axios from 'axios'
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { th } from 'date-fns/locale';
+import type { TransactionData, TransactionResponse } from "../Types";
+import { useEffect } from 'react';
 interface Transaction {
   timestamp: string | number | Date; // depending on your source
   receive: number;
   total: number; // or cost if you have it
 }
 type chartProps = {
-    startDate: Date,
-    endDate:Date
+    startDate: Date;
+    endDate:Date;
+    setStartDate: (date: Date) => void;
+    setEndDate: (date: Date) => void;
 }
-const fetchData = async() =>{
-    const res = await axios.get("http://localhost:3000/transaction");
-    return res.data;
-}
+const fetchData = async (startDate: Date, endDate: Date): Promise<TransactionData[]> => {
+    const startStr = startDate.toLocaleDateString("en-CA"); // YYYY-MM-DD
+    const endStr = endDate.toLocaleDateString("en-CA"); // YYYY-MM-DD
+    const res = await axios.get<TransactionResponse[]>(`http://localhost:3000/transaction?startdate=${startStr}&enddate=${endStr}`);
+    const data = res.data.map((item):TransactionData => ({
+        ...item,
+        timestamp: new Date(item.timestamp)
+    }));
+    return data;
+};
 
-const Chart = ({startDate,endDate}:chartProps) => {
+const Chart = ({startDate,endDate,setStartDate,setEndDate}:chartProps) => {
+    useEffect(() => {
+        // Only set if the parent is still the default (today)
+        const today = new Date();
+        const isDefault = startDate.toDateString() === today.toDateString();
 
+        if (isDefault) {
+        const last7 = new Date();
+        last7.setDate(today.getDate() - 6); // 7 days back
+        setStartDate(last7);
+        setEndDate(today);
+        }
+    }, []); // run once when Chart mounts
     const {data=[], isLoading, isError, error} = useQuery({
-        queryKey:["Transaction"],
-        queryFn:fetchData
+        queryKey:["Transaction",startDate,endDate],
+        queryFn:()=>fetchData(startDate!,endDate!)
     });
     if(isLoading)return <div>Loading...</div>;
     if (isError) return <div>Error: {(error as Error).message}</div>;

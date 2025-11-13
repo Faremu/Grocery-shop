@@ -32,7 +32,6 @@ const Merchandise = ( {data,onOpen}:MerchandiseProps ) => {
                             </div>
                     ))}
                 </div>
-                <hr className='mt-10 border-gray-300' />
             </div>
             <div className='my-10 pl-10'>
                 <p className="text-xl mb-5">ขนม</p>
@@ -50,7 +49,6 @@ const Merchandise = ( {data,onOpen}:MerchandiseProps ) => {
                             </div>
                     ))}
                 </div>
-                <hr className='mt-10 border-gray-300' />
             </div>
             
             <div className='my-10 pl-10'>
@@ -69,7 +67,6 @@ const Merchandise = ( {data,onOpen}:MerchandiseProps ) => {
                             </div>
                     ))}
                 </div>
-                <hr className='mt-10 border-gray-300' />
             </div>
             
            
