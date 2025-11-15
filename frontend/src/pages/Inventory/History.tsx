@@ -26,10 +26,14 @@ const History = () => {
     ];
     const [startDate, setStartDate] = useState<Date | undefined>(new Date());
     const [endDate, setEndDate] = useState<Date | null>(new Date());
+    const [selectedType, setSelectedType] = useState<string>("");
     const {data=[],isLoading,isError,error} = useQuery({
         queryKey:["History", startDate, endDate],
         queryFn:() =>fetchData(startDate!, endDate!),
     })
+    const filtered = data.filter(item => 
+        selectedType === "" || item.type === selectedType
+    );
     if(isLoading)return <div>Loading...</div>;
     if (isError) return <div>Error: {(error as Error).message}</div>;
 
@@ -60,10 +64,11 @@ const History = () => {
             </div>
             <div className="flex flex-row gap-2">
                 <p>หมวดหมู่ :</p>
-                <button className="bg-[#00C853] rounded-full text-center text-white w-[100px] cursor-pointer focus:outline-2 focus:outline-offset-2 focus:outline-[#00C853]">เพิ่มสินค้าใหม่</button>
-                <button className="bg-[#FF4D4D] rounded-full text-center text-white w-[80px] cursor-pointer focus:outline-2 focus:outline-offset-2 focus:outline-[#FF4D4D]">ลบสินค้า</button>
-                <button className="bg-[#D9D9D9] rounded-full text-center text-white w-[80px] cursor-pointer focus:outline-2 focus:outline-offset-2 focus:outline-[#D9D9D9]">แก้ไขสินค้า</button>
-                <button className="bg-yellow-400 rounded-full text-center text-white w-[80px] cursor-pointer focus:outline-2 focus:outline-offset-2 focus:outline-yellow-400">ขาย</button>
+                <button className="bg-[#00C853] rounded-full text-center text-white w-[100px] cursor-pointer focus:outline-2 focus:outline-offset-2 focus:outline-[#00C853]" onClick={()=>setSelectedType("เพิ่มสินค้าใหม่")}>เพิ่มสินค้าใหม่</button>
+                <button className="bg-[#FF4D4D] rounded-full text-center text-white w-[80px] cursor-pointer focus:outline-2 focus:outline-offset-2 focus:outline-[#FF4D4D]" onClick={()=>setSelectedType("ลบสินค้า")}>ลบสินค้า</button>
+                <button className="bg-[#D9D9D9] rounded-full text-center text-white w-[80px] cursor-pointer focus:outline-2 focus:outline-offset-2 focus:outline-[#D9D9D9]" onClick={()=>setSelectedType("แก้ไขสินค้า")}>แก้ไขสินค้า</button>
+                <button className="bg-yellow-400 rounded-full text-center text-white w-[80px] cursor-pointer focus:outline-2 focus:outline-offset-2 focus:outline-yellow-400" onClick={()=>setSelectedType("ขาย")}>ขาย</button>
+                <button className="hover:cursor-pointer" onClick={()=>setSelectedType("")}><u>รีเซ็ต</u></button>
             </div>
             
             <table className="table-auto m-10 p-5 bg-white">
@@ -77,37 +82,45 @@ const History = () => {
                     </tr>
                 </thead>
                 <tbody>
-                    {data.map(item=>{
-                        
-                        return (
-                            <tr>
-                                 {headers.map(h => {
-                                    if (h.key === "type") {
-                                    return (
-                                        <td key={h.key} className="border border-gray-400 p-2">
-                                        <div className="bg-yellow-400 rounded-full text-center text-white h-fit w-[80px]">
-                                            {String(item[h.key as keyof typeof item])}
-                                        </div>
-                                        </td>
-                                    );
-                                    } else if (h.key === "change") {
-                                    return (
-                                        <td key={h.key} className="border border-gray-400 p-2">
-                                        {item.receive - item.total}
-                                        </td>
-                                    );
-                                    } else {
-                                    const value = item[h.key as keyof typeof item];
-                                    return (
-                                        <td key={h.key} className="border border-gray-400 p-2">
-                                        {value instanceof Date ? value.toLocaleString() : value}
-                                        </td>
-                                    );
-                                    }
-                                })}
-                            </tr>
-                        )
-                    })}
+                    {filtered.length > 0 ? (
+                        filtered.map((item, index) => (
+                        <tr key={index}>
+                            {headers.map(h => {
+                            if (h.key === "type") {
+                                return (
+                                <td key={h.key} className="border border-gray-400 p-2">
+                                    <div className="bg-yellow-400 rounded-full text-center text-white h-fit w-[80px]">
+                                    {String(item[h.key as keyof typeof item])}
+                                    </div>
+                                </td>
+                                );
+                            } else if (h.key === "change") {
+                                return (
+                                <td key={h.key} className="border border-gray-400 p-2">
+                                    {item.receive - item.total}
+                                </td>
+                                );
+                            } else {
+                                const value = item[h.key as keyof typeof item];
+                                return (
+                                <td key={h.key} className="border border-gray-400 p-2">
+                                    {value instanceof Date ? value.toLocaleString() : value}
+                                </td>
+                                );
+                            }
+                            })}
+                        </tr>
+                        ))
+                    ) : (
+                        <tr>
+                        <td
+                            colSpan={headers.length}
+                            className="border p-2 text-center text-gray-500"
+                        >
+                            - ยังไม่มีรายการใด -
+                        </td>
+                        </tr>
+                    )}
                 </tbody>
             </table>
             
