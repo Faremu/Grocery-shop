@@ -14,7 +14,7 @@ const Merchandise = ( {data,onOpen}:MerchandiseProps ) => {
         }
     }
     return (
-        <div className="m-10">
+        <div className="m-10 bg-white rounded-4xl p-10">
             <p className="text-2xl">สินค้าทั้งหมด</p>
             <div className='my-10 pl-10'>
                 <p className="text-xl mb-5">สินค้าขายดี</p>

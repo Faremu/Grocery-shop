@@ -28,3 +28,9 @@ export type TransactionResponse = {
   total: number;
   receive: number;
 };
+
+export type Account = {
+  name: string;
+  debt: number;
+  days: number;
+};

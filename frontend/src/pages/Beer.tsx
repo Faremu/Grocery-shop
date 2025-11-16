@@ -1,4 +1,4 @@
-import Account from "../components/Account"
+import DebtPage from "../components/DebtPage"
 
 const Beer = () => {
     return (
@@ -6,7 +6,7 @@ const Beer = () => {
             <p className='text-2xl font-bold pb-5'>
                 ระบบบริหารการค้างชำระ
             </p>
-            <Account />
+            <DebtPage />
         </div>
     )
 }

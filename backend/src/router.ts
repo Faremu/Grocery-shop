@@ -216,8 +216,10 @@ router.post('/sell',async(req:Request<{}, {}, SellBody>,res:Response)=>{
   
 })
 
-router.get('/Beer',(req,res)=>{
-    res.json("1000");
+router.get('/Account',async(req,res)=>{
+  const query = "SELECT * FROM account;";
+  const [rows] = await db.query(query);
+  res.json(rows);
 });
 
 
