@@ -51,10 +51,6 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 const router = express.Router();
 
-
-router.get('/',(req,res)=>{
-    res.json("1000");
-});
 router.get('/inventory',async(req,res)=>{
   try {
     const [rows] = await db.query<InventoryRow[]>(`SELECT sold, price, cost FROM merchandise;`);
@@ -135,6 +131,8 @@ router.get('/transaction', async(req: Request<{}, {}, {}, TransactionQuery>,res:
 
 router.post('/addmer',upload.single('image'),async (req: CustomRequest, res: Response) => {
     try {
+      const date = new Date;
+      
       const baseCode = req.body.code;
       const [rows] = await db.query(
         `SELECT MAX(CAST(SUBSTRING(code, LENGTH(?) + 1) AS UNSIGNED)) AS maxNumber
@@ -158,7 +156,8 @@ router.post('/addmer',upload.single('image'),async (req: CustomRequest, res: Res
         `INSERT INTO merchandise (code, name, price, cost, stock) VALUES (?, ?, ?, ?, ?)`,
         [fullCode, name, price, cost, stock]
       );
-
+      const querylog = "INSERT INTO transaction(timestamp, type, code, amount) VALUES (?,'เพิ่มสินค้าใหม่',?,?);";
+      await db.query(querylog,[date,fullCode,stock]);
       res.json({ message: 'Merchandise added', fullCode });
     } catch (error) {
       console.error(error);
@@ -171,7 +170,7 @@ router.post('/sell',async(req:Request<{}, {}, SellBody>,res:Response)=>{
   const ts = DateTime.now().toISO();
   const {cart,total,receive} = req.body;
   console.log(cart);
-  
+  await new Promise(resolve => setTimeout(resolve, 3000)); // 3 sec delay
   const codes = cart.map(item => `'${item.code}'`).join(', ');
   const stockCases = cart
     .map(item => `WHEN '${item.code}' THEN stock - ${item.amount}`)
@@ -208,19 +207,48 @@ router.post('/sell',async(req:Request<{}, {}, SellBody>,res:Response)=>{
     ]);
     await db.query(transactionQuery, [transactionValues]);
 
-    res.json({ message: 'Updated database successfully.'});
+    res.json({success:true, message: 'Updated database successfully.'});
   } catch (error) {
     res.status(500).json({error:"Database error", details:error})
   }
-  
-  
-})
+});
 
-router.get('/Account',async(req,res)=>{
+router.get('/account',async(req,res)=>{
   const query = "SELECT * FROM account;";
   const [rows] = await db.query(query);
   res.json(rows);
 });
+
+router.post('/deletemer',async(req,res)=>{
+  try{
+    const date = new Date;
+    const {code,amount} = req.body;
+    const querylog = "INSERT INTO transaction(timestamp, type, code, amount) VALUES (?,'ลบสินค้า',?,?);";
+    await db.query(querylog,[date,code,amount]);
+    const query = "DELETE FROM merchandise WHERE code = ?;";
+    await db.query(query,[code]);
+    res.json({ success: true, message: 'Merchandise deleted'});
+  }catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Something went wrong' });
+  }
+  
+});
+
+router.put('/addbatch',async(req,res)=>{
+  try{
+    const date = new Date;
+    const {code, amount} = req.body;
+    const query = "UPDATE merchandise SET stock = stock + ? WHERE code = ?;";
+    await db.query(query,[amount, code]);
+    const querylog = "INSERT INTO transaction (timestamp, type, code, amount) VALUES (?,'เพิ่มสินค้า',?,?);";
+    await db.query(querylog,[date,code,amount]);
+    res.json({ success: true, message: 'Merchandise updated'});
+  }catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Something went wrong' });
+  }
+})
 
 
 

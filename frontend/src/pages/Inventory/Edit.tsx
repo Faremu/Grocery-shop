@@ -1,29 +1,73 @@
-import { useQuery } from "@tanstack/react-query";
 import type { MyDataItem } from "../../Types"
 import axios from "axios"
 import AddModal from "../../components/modals/Add";
-import { useState } from "react";
+import {  useEffect, useState } from "react";
 
-const fetchData = async():Promise<MyDataItem[]> => {
-    const res = await axios.get("http://localhost:3000/merlist");
-    return res.data;
-}
+type DeleteResponse = {
+  success: boolean;
+  message: string;
+};
 
 const Edit = () => {
     const header = ["รูปภาพ","รหัส","ชื่อ", "ราคา", "ต้นทุน","คงเหลือ", "ขายได้" ,"จัดการ"]
     const [showModal,setShowModal] = useState<boolean>(false);
-    const [addShow, setAddShow] = useState<boolean>(false)
-    const {data=[], isLoading, isError, error} = useQuery({
-        queryKey: ["Edit"],
-        queryFn: fetchData,
-    })
+    const [activeRow, setActiveRow] = useState<string | null>(null)
+    const [merchandise, setMerchandise] = useState<MyDataItem[] | null>(null);
 
-    if(isLoading)return <div>Loading...</div>;
-    if (isError) return <div>Error: {(error as Error).message}</div>;
-
+    useEffect(() => {
+    const fetchData = async () => {
+        try {
+            const res = await axios.get<MyDataItem[]>("http://localhost:3000/merlist");
+            setMerchandise(res.data);
+        } catch (err) {
+            console.error(err);
+            setMerchandise([]);
+            }
+        };
+        fetchData();
+    }, []);
+    const batchAdd = async(code:string,amount:number) => {
+        try{
+        const res = await axios.put("http://localhost:3000/addbatch",{code,amount});
+        console.log(res.data);
+        setMerchandise(prev =>
+            prev
+                ? prev.map(item =>
+                    item.code === code
+                    ? { ...item, stock: item.stock + amount } // increment stock
+                    : item
+                )
+                : []
+            );
+        } catch (err) {
+            console.error(err);
+            alert("เพิ่มสินค้าไม่สำเร็จ");
+        }
+    }
+    // In render:
+    if (merchandise === null) return <div>Loading...</div>;
     const closeModal = () =>{
         setShowModal(false)
     }
+    const handleDelete = async (code: string,amount:number) => {
+        if (!confirm("ต้องการลบสินค้านี้ใช่หรือไม่")) return;
+
+        try {
+        const res = await axios.post<DeleteResponse>(
+            "http://localhost:3000/deletemer",
+            { code,amount },
+            { headers: { "Content-Type": "application/json" } }
+        );
+        
+        if (res.data.success) {
+            setMerchandise(prev => prev ? prev.filter(item => item.code !== code) : []);
+        } else {
+            alert("ลบไม่สำเร็จ: " + res.data.message);
+        }
+        } catch (err) {
+            console.error(err);
+        }
+    };
     return (
         <div>
             {showModal && <AddModal onClose={closeModal}/>}
@@ -38,9 +82,9 @@ const Edit = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {data.map(item=>{
+                        {merchandise.map(item=>{
                             return (
-                            <tr>
+                            <tr key={item.code}>
                                 {header.map((_,idx)=>{
                                     const values = Object.values(item);
                                     if(idx === 0){
@@ -71,27 +115,39 @@ const Edit = () => {
                                     }
                                     else if(idx === 7){
                                         return (
-                                            <td className="border border-gray-400 p-2 space-x-2 ">
-                                                <div className="relative inline-block group">
-                                                    {/* Hover target */}
-                                                    <div className="border rounded-lg px-4 py-2 cursor-pointer hover:bg-gray-200">
-                                                        เพิ่ม
+                                            <td key={`${item.code}-manage`} className="border border-gray-400 p-2 space-x-2 ">
+                                                <div className="flex flex-row justify-center">
+                                                    <div
+                                                    className="relative inline-block"
+                                                    onMouseEnter={() => setActiveRow(item.code)}
+                                                    onMouseLeave={() => setActiveRow(prev => prev === item.code ? null : prev)}
+                                                    >
+                                                        <div className="rounded-lg p-1 cursor-pointer hover:bg-gray-200" title="เพิ่มสินค้า">
+                                                            <img src="./img/add.png" className="h-5 w-5" alt="" />
+                                                        </div>
+                                                        <div
+                                                            className={`text-white z-10 absolute -left-23 flex flex-row bg-green-400 rounded-full shadow-lg py-1 px-3 space-x-2 duration-150
+                                                            ${activeRow === item.code ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}
+                                                        >
+                                                            <button className="w-10 h-10 rounded-full hover:scale-125 active:scale-100 hover:cursor-pointer" onClick={()=>batchAdd(item.code,3)}>+3</button>
+                                                            <button className="w-10 h-10 rounded-full hover:scale-125 active:scale-100 hover:cursor-pointer" onClick={()=>batchAdd(item.code,6)}>+6</button>
+                                                            <button className="w-10 h-10 rounded-full hover:scale-125 active:scale-100 hover:cursor-pointer" onClick={()=>batchAdd(item.code,9)}>+9</button>
+                                                            <button className="w-10 h-10 rounded-full hover:scale-125 active:scale-100 hover:cursor-pointer" onClick={()=>batchAdd(item.code,12)}>+12</button>
+                                                        </div>
                                                     </div>
 
-                                                    {/* Hidden div */}
-                                                    <div className="absolute top-full left-0 mt-2 flex flex-row bg-white rounded-full shadow-xl py-1 px-3 space-x-2
-                                                                    opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                                                        <button className="w-10 h-10 rounded-full hover:bg-gray-200">+3</button>
-                                                        <button className="w-10 h-10 rounded-full hover:bg-gray-200">+6</button>
-                                                        <button className="w-10 h-10 rounded-full hover:bg-gray-200">+9</button>
-                                                        <button className="w-10 h-10 rounded-full hover:bg-gray-200">+12</button>
+
+
+                                                    
+                                                    <div className="p-1 rounded-lg cursor-pointer hover:bg-gray-200" title="แก้ไขสินค้า">
+                                                        <img src="./img/edit1.png" className="h-5 w-5" alt="" />
+                                                    </div>
+                                                    <div className="p-1 rounded-lg cursor-pointer hover:bg-gray-200" title="ลบสินค้า" 
+                                                    onClick={()=>handleDelete(item.code,item.stock)}>
+                                                        <img src="./img/bin.png" className="h-5 w-5" alt="" />
                                                     </div>
                                                 </div>
-
-
                                                 
-                                                <button className="border rounded-lg hover:cursor-pointer">แก้ไข</button>
-                                                <button className="border rounded-lg hover:cursor-pointer">ลบ</button>
                                             </td>
                                         )
                                     }

@@ -64,12 +64,12 @@ const Home = () =>{
     if (isLoading) return <div>Loading...</div>;
     if (isError) return <div>Error: {(error as Error).message}</div>;
     return(
-        <>
+        <div className={showRCModal || showCFModal ? "overflow-hidden h-screen" : ""}>
             <Summary cart={selectedItems} onOpen={onOpenRCHandle} onReset={onReset}/>
             <Merchandise data={stock} onOpen={onOpenCFHandle} />
             {showCFModal && showItem && <ConfirmModal item={showItem} onSelected={onSelectedHandle} onClose={onCloseHandle}/>}
-            {showRCModal && <Receipt cart={selectedItems} onClose={onCloseHandle}/>}
-        </>
+            {showRCModal && <Receipt cart={selectedItems} onReset={onReset} onClose={onCloseHandle}/>}
+        </div>
     );
 }
 export default Home

@@ -26,6 +26,10 @@ const AddModal = ({onClose}:BoolTypeProps) =>{
 
     }
     const addMerchandise = async() => {
+        if (!name || !code || !cost || !price || !amount || !imageFile) {
+            alert("กรุณากรอกข้อมูลให้ครบทุกช่อง");
+            return;
+        }
         const formData = new FormData();
         formData.append("code", code);
         formData.append("name", name);
@@ -37,6 +41,7 @@ const AddModal = ({onClose}:BoolTypeProps) =>{
             const res = await axios.post("http://localhost:3000/addmer",formData, {
                 headers: { "Content-Type": "multipart/form-data" },});
             console.log(res.data);
+            window.location.reload();
         }catch(err){
             console.error(err);
         }

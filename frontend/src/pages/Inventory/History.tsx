@@ -65,17 +65,18 @@ const History = () => {
             <div className="flex flex-row gap-2">
                 <p>หมวดหมู่ :</p>
                 <button className="bg-[#00C853] rounded-full text-center text-white w-[100px] cursor-pointer focus:outline-2 focus:outline-offset-2 focus:outline-[#00C853]" onClick={()=>setSelectedType("เพิ่มสินค้าใหม่")}>เพิ่มสินค้าใหม่</button>
+                <button className="bg-[#668cff] rounded-full text-center text-white w-[80px] cursor-pointer focus:outline-2 focus:outline-offset-2 focus:outline-[#668cff]" onClick={()=>setSelectedType("เพิ่มสินค้า")}>เพิ่มสินค้า</button>
                 <button className="bg-[#FF4D4D] rounded-full text-center text-white w-[80px] cursor-pointer focus:outline-2 focus:outline-offset-2 focus:outline-[#FF4D4D]" onClick={()=>setSelectedType("ลบสินค้า")}>ลบสินค้า</button>
                 <button className="bg-[#D9D9D9] rounded-full text-center text-white w-[80px] cursor-pointer focus:outline-2 focus:outline-offset-2 focus:outline-[#D9D9D9]" onClick={()=>setSelectedType("แก้ไขสินค้า")}>แก้ไขสินค้า</button>
                 <button className="bg-yellow-400 rounded-full text-center text-white w-[80px] cursor-pointer focus:outline-2 focus:outline-offset-2 focus:outline-yellow-400" onClick={()=>setSelectedType("ขาย")}>ขาย</button>
                 <button className="hover:cursor-pointer" onClick={()=>setSelectedType("")}><u>รีเซ็ต</u></button>
             </div>
-            
-            <table className="table-auto m-10 p-5 bg-white">
-                <thead>
+            <div className="overflow-y-auto max-h-[calc(10*2.5rem)] m-10 w-170">
+            <table className="w-160 table-auto p-5 bg-white mt-1">
+                <thead className="bg-white sticky top-0 z-10">
                     <tr>
                         {headers.map(h => (
-                            <td key={h.key} className="border p-2 bg-white">
+                            <td key={h.key} className="border-2 p-2 bg-white">
                                 {h.label}
                             </td>
                             ))}
@@ -87,21 +88,40 @@ const History = () => {
                         <tr key={index}>
                             {headers.map(h => {
                             if (h.key === "type") {
+                                let color = ""
+                                const type_prop = String(item[h.key as keyof typeof item]);
+                                if(type_prop === "ขาย"){
+                                    color = "bg-yellow-400 w-[80px]"
+                                }else if(type_prop === "เพิ่มสินค้าใหม่"){
+                                    color = "bg-[#00C853] w-[100px]";
+                                }else if(type_prop === "ลบสินค้า"){
+                                    color = "bg-[#FF4D4D] w-[80px]";
+                                }else if(type_prop === "แก้ไขสินค้า"){
+                                    color = "bg-[#D9D9D9] w-[80px]";
+                                }else if(type_prop === "เพิ่มสินค้า"){
+                                    color = "bg-[#668cff] w-[80px]";
+                                }
                                 return (
                                 <td key={h.key} className="border border-gray-400 p-2">
-                                    <div className="bg-yellow-400 rounded-full text-center text-white h-fit w-[80px]">
-                                    {String(item[h.key as keyof typeof item])}
+                                    <div className="flex justify-center">
+                                        <div className={`${color} rounded-full text-center text-white h-fit `}>
+                                            {type_prop}
+                                        </div>
                                     </div>
                                 </td>
                                 );
                             } else if (h.key === "change") {
+                                if(item.receive == null || item.total == null)return(
+                                  <td key={h.key} className="border border-gray-400 p-2">-</td>  
+                                );
                                 return (
                                 <td key={h.key} className="border border-gray-400 p-2">
                                     {item.receive - item.total}
                                 </td>
                                 );
                             } else {
-                                const value = item[h.key as keyof typeof item];
+                                let value = item[h.key as keyof typeof item];
+                                if(value == null)value = "-";
                                 return (
                                 <td key={h.key} className="border border-gray-400 p-2">
                                     {value instanceof Date ? value.toLocaleString() : value}
@@ -123,7 +143,7 @@ const History = () => {
                     )}
                 </tbody>
             </table>
-            
+            </div>
         </div>
     )
 }
